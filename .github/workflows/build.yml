@@ -1,0 +1,113 @@
+name: Build app
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release (e.g. 0.3.0). Leave empty to only build."
+        required: false
+        default: ""
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-app.txt pyinstaller
+      - name: Version
+        shell: bash
+        run: |
+          V="${{ github.event.inputs.version }}"; [ -z "$V" ] && V="${GITHUB_REF_NAME#v}"; [[ "$V" =~ ^[0-9] ]] || V="0.0.0"
+          echo "APP_VERSION=$V" >> "$GITHUB_ENV"
+      - name: Build
+        run: pyinstaller --noconfirm packaging/DeadlineHub.spec
+      - name: Smoke test (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $env:DEADLINE_HUB_HOME = "$env:RUNNER_TEMP\dh"
+          # windowed apps return immediately unless we wait for them
+          $p = Start-Process -FilePath ./dist/DeadlineHub.exe -ArgumentList "--sync" -Wait -PassThru
+          Get-Content "$env:RUNNER_TEMP\dh\sync.log"
+          if ($p.ExitCode -ne 0) { exit $p.ExitCode }
+      - name: Smoke test (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          DEADLINE_HUB_HOME="$RUNNER_TEMP/dh" ./dist/DeadlineHub.app/Contents/MacOS/DeadlineHub --sync
+          cat "$RUNNER_TEMP/dh/sync.log"
+      - name: Installer (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          if (-not (Get-Command iscc -ErrorAction SilentlyContinue)) {
+            choco install innosetup -y --no-progress | Out-Null
+            $env:PATH += ";C:\Program Files (x86)\Inno Setup 6"
+          }
+          iscc /Q "/DAppVersion=$env:APP_VERSION" packaging\installer.iss
+          Copy-Item dist\DeadlineHub-Setup.exe .
+          # install silently and check everything landed where it should
+          Start-Process .\DeadlineHub-Setup.exe -ArgumentList "/VERYSILENT","/SUPPRESSMSGBOXES","/NORESTART" -Wait
+          if (-not (Test-Path "$env:LOCALAPPDATA\Programs\Deadline Hub\DeadlineHub.exe")) { throw "installer did not install the app" }
+          Get-ItemProperty "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -Name DeadlineHub
+          Get-ItemProperty "HKCU:\Software\Classes\moodlemobile\shell\open\command"
+          Compress-Archive -Path dist/DeadlineHub.exe -DestinationPath DeadlineHub-Windows-portable.zip
+      - name: Disk image (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          mkdir -p dmg && cp -R dist/DeadlineHub.app dmg/ && ln -s /Applications dmg/Applications
+          hdiutil create -volname "Deadline Hub" -srcfolder dmg -ov -format UDZO DeadlineHub-Mac.dmg
+          cd dist && zip -qry ../DeadlineHub-Mac.zip DeadlineHub.app
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DeadlineHub-${{ runner.os }}
+          path: |
+            DeadlineHub-*.zip
+            DeadlineHub-*.exe
+            DeadlineHub-*.dmg
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/') || github.event.inputs.version != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+      - name: Package browser extension
+        run: cd extension && zip -qr ../DeadlineHub-Extension.zip .
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.version != '' && format('v{0}', github.event.inputs.version) || github.ref_name }}
+          target_commitish: ${{ github.sha }}
+          name: Deadline Hub ${{ github.event.inputs.version != '' && format('v{0}', github.event.inputs.version) || github.ref_name }}
+          files: |
+            DeadlineHub-*.zip
+            DeadlineHub-*.exe
+            DeadlineHub-*.dmg
+          body: |
+            ## Download
+            - **Windows:** `DeadlineHub-Setup.exe` → open it → **Install**. (If Windows warns, click **More info → Run anyway**.)
+            - **Mac:** `DeadlineHub-Mac.dmg` → drag Deadline Hub into Applications → open it. (First time: right-click → **Open**.)
+
+            Then pick your school and click **Sign in with Moodle** (or connect Canvas / a calendar link).
+            Deadline Hub starts with your computer and keeps your deadlines in sync by itself.
+            Everything runs on your own computer.
+
+            Other files: `DeadlineHub-Windows-portable.zip` (no install), `DeadlineHub-Mac.zip`,
+            `DeadlineHub-Extension.zip` (optional browser extension for Moodle sign-in).

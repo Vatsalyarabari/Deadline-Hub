@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deadline Hub: every school deadline in one place</title>
+<meta name="description" content="Free app that reads your Moodle or Canvas courses and course files, finds every due date, and puts them on your phone with reminders.">
+<link rel="icon" href="icon.png">
+<style>
+:root{--bg:#f6f5f2;--panel:#fff;--ink:#1d1d1b;--muted:#6b6a66;--line:#e6e4de;--accent:#2f5bea;--accent-ink:#fff;--chip:#f0eee9}
+@media (prefers-color-scheme: dark){:root{--bg:#151513;--panel:#1f1f1c;--ink:#ecebe6;--muted:#9d9b94;--line:#2f2f2b;--accent:#6b8cff;--accent-ink:#0d0d0c;--chip:#2a2a26}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.55 "Segoe UI Variable","Segoe UI",system-ui,-apple-system,sans-serif}
+.wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+nav{display:flex;align-items:center;gap:10px;padding:20px 0;font-weight:700}
+nav img{width:30px;height:30px}
+.hero{display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center;padding:36px 0 64px}
+@media (max-width:860px){.hero{grid-template-columns:1fr;gap:28px;padding-top:12px}}
+h1{font-size:clamp(34px,5vw,52px);line-height:1.08;letter-spacing:-.025em;margin:0 0 16px}
+.lead{font-size:19px;color:var(--muted);margin:0 0 28px;max-width:34em}
+.dl{display:inline-flex;align-items:center;gap:12px;background:var(--accent);color:var(--accent-ink);text-decoration:none;
+  font-weight:700;font-size:18px;padding:16px 26px;border-radius:14px;box-shadow:0 6px 20px color-mix(in srgb,var(--accent) 30%,transparent)}
+.dl:hover{filter:brightness(1.07)}
+.dl:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+.alt{margin-top:14px;font-size:14px;color:var(--muted)}
+.alt a{color:var(--muted)}
+.shot{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:8px;box-shadow:0 20px 50px rgba(0,0,0,.08)}
+.shot img{display:block;width:100%;height:auto;border-radius:12px}
+section{padding:56px 0;border-top:1px solid var(--line)}
+h2{font-size:30px;letter-spacing:-.02em;margin:0 0 28px}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;counter-reset:s}
+@media (max-width:760px){.steps{grid-template-columns:1fr}}
+.step{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px}
+.step::before{counter-increment:s;content:counter(s);display:grid;place-items:center;width:34px;height:34px;border-radius:50%;
+  background:var(--accent);color:var(--accent-ink);font-weight:700;margin-bottom:12px}
+.step b{display:block;font-size:18px;margin-bottom:4px}
+.step span{color:var(--muted);font-size:15px}
+.feats{display:grid;grid-template-columns:repeat(3,1fr);gap:26px 30px}
+@media (max-width:760px){.feats{grid-template-columns:1fr}}
+.feats b{display:block;margin-bottom:2px}
+.feats span{color:var(--muted);font-size:15px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center}
+@media (max-width:860px){.two{grid-template-columns:1fr}}
+details{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin-bottom:10px}
+summary{cursor:pointer;font-weight:600}
+details p{color:var(--muted);margin:10px 0 0;font-size:15px}
+footer{padding:36px 0 60px;color:var(--muted);font-size:14px;border-top:1px solid var(--line)}
+footer a{color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav><img src="icon.png" alt="">Deadline Hub</nav>
+
+  <div class="hero">
+    <div>
+      <h1>Never miss a due date again.</h1>
+      <p class="lead">Deadline Hub reads your Moodle or Canvas courses, <b>including the syllabus and course files</b>,
+        finds every due date, and puts them on your phone with reminders. Free, and it runs on your own computer.</p>
+      <a class="dl" id="dl" href="https://github.com/Vatsalyarabari/Deadline-Hub/releases/latest/download/DeadlineHub-Setup.exe">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0l-5-5m5 5l5-5M4 21h16"/></svg>
+        <span id="dlText">Download for Windows</span></a>
+      <div class="alt" id="alt">Also for <a href="https://github.com/Vatsalyarabari/Deadline-Hub/releases/latest/download/DeadlineHub-Mac.dmg">Mac</a> ·
+        Windows 10 &amp; 11 · Macs with Apple silicon (M1 or newer)</div>
+    </div>
+    <div class="shot"><img src="screenshot.png" alt="Deadline Hub showing upcoming deadlines ranked by what to do first" width="1100" height="1490"></div>
+  </div>
+</div>
+
+<section><div class="wrap">
+  <h2>Set up in under a minute</h2>
+  <div class="steps">
+    <div class="step"><b>Install</b><span>Open the download and click <b>Install</b>. No settings to change.</span></div>
+    <div class="step"><b>Sign in with Moodle</b><span>Pick your school and sign in like you always do. Canvas and other systems work too.</span></div>
+    <div class="step"><b>Get reminders</b><span>Tap <b>Download calendar</b> to put everything on your phone. It keeps itself up to date.</span></div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2>Everything you need to stay on top of it</h2>
+  <div class="feats">
+    <div><b>Finds hidden dates</b><span>Reads syllabi, schedules and slides, not just what's on the course calendar.</span></div>
+    <div><b>Tells you what to do first</b><span>Ranks your work by how soon it's due, how much it's worth, and how big it is.</span></div>
+    <div><b>Reminders that make sense</b><span>A heads-up days before big work, a morning list of what's due, alerts before deadlines.</span></div>
+    <div><b>Spots changes</b><span>"Quiz moved to Friday" announcements are caught and flagged.</span></div>
+    <div><b>Check things off</b><span>Mark work done, keep a streak, and see your grades and what you need on the final.</span></div>
+    <div><b>Works with your apps</b><span>Phone calendar, Notion and Todoist. Checking off syncs both ways.</span></div>
+  </div>
+</div></section>
+
+<section><div class="wrap two">
+  <div class="shot"><img src="workload.png" alt="Workload heatmap showing the busiest week" width="1100" height="1054" loading="lazy"></div>
+  <div>
+    <h2>See crunch weeks coming</h2>
+    <p class="lead" style="margin:0">The workload view shows the next two months at a glance and flags your busiest week,
+      so you can start early instead of pulling all-nighters.</p>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2>Questions</h2>
+  <details><summary>Is my login safe?</summary>
+    <p>Deadline Hub never sees your password. You sign in on your school's own Moodle page, and Moodle gives the app
+      the same kind of key the official Moodle phone app uses. That key and all your data stay on your computer.
+      Nothing is sent to us or to any AI service.</p></details>
+  <details><summary>Windows says "Windows protected your PC". Is that OK?</summary>
+    <p>Yes. Windows shows this for new apps that haven't built up a download history yet. Click <b>More info</b>, then
+      <b>Run anyway</b>. On a Mac, right-click the app and choose <b>Open</b> the first time.</p></details>
+  <details><summary>My school uses Canvas, D2L, Blackboard or Google Classroom.</summary>
+    <p>Canvas: paste an access token from your Canvas settings (the app shows you where). D2L, Blackboard, Google
+      Classroom and others: paste your course calendar's subscribe link.</p></details>
+  <details><summary>Do I need to keep the window open?</summary>
+    <p>No. Deadline Hub starts with your computer and sits as a small icon by the clock, syncing every few hours.
+      You can turn this off in the app.</p></details>
+  <details><summary>How do I uninstall it?</summary>
+    <p>Windows: Settings → Apps → Deadline Hub → Uninstall. Mac: drag it from Applications to the Trash.</p></details>
+</div></section>
+
+<div class="wrap"><footer>
+  Deadline Hub is free and open source. <a href="https://github.com/Vatsalyarabari/Deadline-Hub">Source code</a> ·
+  <a href="https://github.com/Vatsalyarabari/Deadline-Hub/releases">All downloads</a>
+</footer></div>
+
+<script>
+// Offer the right download for this computer.
+(function(){
+  const ua = navigator.userAgent, base = "https://github.com/Vatsalyarabari/Deadline-Hub/releases/latest/download/";
+  const mac = /Macintosh|Mac OS X/.test(ua) && !/iPhone|iPad/.test(ua);
+  const mobile = /Android|iPhone|iPad|iPod/.test(ua);
+  if (mac) {
+    document.getElementById("dl").href = base + "DeadlineHub-Mac.dmg";
+    document.getElementById("dlText").textContent = "Download for Mac";
+    document.getElementById("alt").innerHTML = 'Also for <a href="' + base + 'DeadlineHub-Setup.exe">Windows</a> · Windows 10 &amp; 11 · Macs with Apple silicon (M1 or newer)';
+  } else if (mobile) {
+    document.getElementById("alt").innerHTML = "Deadline Hub runs on your laptop or desktop and sends reminders to your phone's calendar. Open this page on your computer to install it.";
+  }
+})();
+</script>
+</body>
+</html>

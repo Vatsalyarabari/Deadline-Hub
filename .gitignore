@@ -1,0 +1,14 @@
+.cache/
+.env
+__pycache__/
+_to_delete/
+app.log
+build/
+config.yaml
+dist/
+google_client_secret.json
+google_token.json
+last_sync.json
+out/
+state.json
+sync.log

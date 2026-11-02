@@ -1,0 +1,666 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deadline Hub</title>
+<style>
+:root{
+  --bg:#f6f5f2; --panel:#ffffff; --ink:#1d1d1b; --muted:#6b6a66; --line:#e6e4de;
+  --accent:#2f5bea; --accent-ink:#fff; --good:#1f8a4c; --warn:#b26a00; --bad:#c43b30;
+  --chip:#f0eee9; --radius:14px;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#151513; --panel:#1f1f1c; --ink:#ecebe6; --muted:#9d9b94; --line:#2f2f2b;
+         --accent:#6b8cff; --accent-ink:#0d0d0c; --chip:#2a2a26; }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:15px/1.45 "Segoe UI Variable","Segoe UI",system-ui,-apple-system,sans-serif}
+.wrap{max-width:980px;margin:0 auto;padding:28px 20px 60px}
+header{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+h1{font-size:22px;margin:0;letter-spacing:-.01em}
+h1 span{color:var(--muted);font-weight:400}
+.spacer{flex:1}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;
+  background:var(--panel);border:1px solid var(--line);font-size:13px;color:var(--muted)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex:none}
+.dot.ok{background:var(--good)} .dot.bad{background:var(--bad)}
+button{font:inherit;border:0;border-radius:10px;padding:9px 16px;cursor:pointer;background:var(--chip);color:var(--ink)}
+button.primary{background:var(--accent);color:var(--accent-ink);font-weight:600}
+button.link{background:none;padding:0;color:var(--accent)}
+button:disabled{opacity:.55;cursor:default}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.grid{display:grid;grid-template-columns:1fr 300px;gap:20px}
+@media (max-width:820px){.grid{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
+.card h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 12px}
+.stats{display:flex;gap:22px;margin-bottom:6px}
+.stat b{display:block;font-size:24px;letter-spacing:-.02em}
+.stat span{font-size:12px;color:var(--muted)}
+.group{margin-top:18px}
+.group h3{font-size:13px;color:var(--muted);margin:0 0 8px;font-weight:600}
+.item{display:grid;grid-template-columns:58px 1fr auto;gap:12px;align-items:start;padding:12px 0;border-top:1px solid var(--line)}
+.group .item:first-of-type{border-top:0}
+.date{text-align:center;border-radius:10px;background:var(--chip);padding:6px 0}
+.date .d{font-size:18px;font-weight:700;line-height:1.1}
+.date .m{font-size:11px;color:var(--muted);text-transform:uppercase}
+.title{font-weight:600}
+.meta{font-size:13px;color:var(--muted);margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.course{font-size:12px;font-weight:600;padding:2px 8px;border-radius:6px;color:#fff}
+.badge{font-size:11px;font-weight:700;padding:2px 7px;border-radius:6px;background:var(--accent);color:var(--accent-ink)}
+.badge.changed{background:var(--warn);color:#fff}
+details{font-size:13px;color:var(--muted);margin-top:4px}
+details summary{cursor:pointer}
+details p{margin:6px 0 0;white-space:pre-wrap}
+.when{font-size:13px;color:var(--muted);white-space:nowrap;text-align:right}
+.when a{color:var(--accent);text-decoration:none}
+.empty{color:var(--muted);padding:30px 0;text-align:center}
+.side .card+.card{margin-top:16px}
+.side p{margin:0 0 10px;color:var(--muted);font-size:14px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.switch{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.toggle{position:relative;width:44px;height:26px;border-radius:999px;background:var(--line);flex:none;padding:0}
+.toggle::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .15s}
+.toggle.on{background:var(--good)} .toggle.on::after{left:21px}
+.banner{border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:14px}
+.banner.bad{background:color-mix(in srgb,var(--bad) 12%,var(--panel));border:1px solid color-mix(in srgb,var(--bad) 35%,transparent)}
+.banner.warn{background:color-mix(in srgb,var(--warn) 12%,var(--panel));border:1px solid color-mix(in srgb,var(--warn) 35%,transparent)}
+.acct{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}
+.acct:first-of-type{border-top:0;padding-top:0}
+.acct .info{flex:1;min-width:0}
+.acct .info b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acct .info span{font-size:12px;color:var(--muted);display:block}
+.acct .dot{margin-top:7px}
+.acct button{font-size:12px;padding:4px 10px}
+/* setup */
+.setup{margin-bottom:20px}
+.setup h2.big{font-size:20px;text-transform:none;letter-spacing:-.01em;color:var(--ink);margin:0 0 4px}
+.setup .sub{color:var(--muted);margin:0 0 16px}
+.choices{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+@media (max-width:620px){.choices{grid-template-columns:1fr}}
+.choice{text-align:left;border:1px solid var(--line);background:var(--bg);padding:14px;border-radius:12px}
+.choice b{display:block;margin-bottom:2px}
+.choice span{font-size:13px;color:var(--muted)}
+.choice.sel{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.form label{display:block;font-size:13px;font-weight:600;margin:12px 0 6px}
+.form .hint{font-size:13px;color:var(--muted);font-weight:400}
+input[type=text],input[type=password],input[type=url]{width:100%;font:inherit;padding:10px 12px;border-radius:10px;
+  border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.seg{display:inline-flex;background:var(--chip);border-radius:10px;padding:3px;gap:3px;flex-wrap:wrap}
+.seg button{padding:7px 12px;font-size:13px;background:none}
+.seg button.sel{background:var(--panel);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+ol.steps{margin:8px 0 6px;padding-left:20px} ol.steps li{margin:7px 0}
+code{background:var(--chip);padding:1px 6px;border-radius:5px;font-size:13px;word-break:break-all}
+.msg{font-size:13px;margin-top:10px}
+.msg.bad{color:var(--bad)} .msg.ok{color:var(--good)}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;
+  border-radius:50%;animation:s .8s linear infinite;vertical-align:-2px;margin-right:6px}
+@keyframes s{to{transform:rotate(360deg)}}
+.hidden{display:none !important}
+.foot{margin-top:26px;font-size:12px;color:var(--muted);text-align:center}
+.foot button{background:none;color:var(--muted);text-decoration:underline;padding:0;font-size:12px}
+.where{font-size:13px;color:var(--muted)} .where li{margin:4px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Deadline Hub <span>· every deadline, in one place</span></h1>
+    <div class="spacer"></div>
+    <span class="pill hidden" id="syncPill"><span class="dot" id="syncDot"></span><span id="syncText"></span></span>
+    <button class="primary hidden" id="syncBtn">Sync now</button>
+  </header>
+
+  <div id="banners"></div>
+
+  <!-- ================= SETUP ================= -->
+  <section class="card setup hidden" id="setup">
+    <div class="row" style="justify-content:space-between;align-items:flex-start">
+      <div>
+        <h2 class="big" id="setupTitle">Connect your school</h2>
+        <p class="sub" id="setupSub">Deadline Hub reads your courses and course files, finds every due date, and puts them in your calendar with reminders. Everything stays on this computer.</p>
+      </div>
+      <button id="closeSetup" class="hidden" aria-label="Close">✕</button>
+    </div>
+
+    <div class="choices" role="radiogroup" aria-label="Account type">
+      <button class="choice" data-type="moodle"><b>Moodle</b><span>Sign in once. Due dates plus dates inside course files</span></button>
+      <button class="choice" data-type="canvas"><b>Canvas</b><span>Due dates plus syllabus and files</span></button>
+      <button class="choice" data-type="ics"><b>Calendar link</b><span>D2L, Blackboard, Google Classroom, or any school calendar</span></button>
+    </div>
+
+    <!-- Moodle -->
+    <div class="form hidden" data-form="moodle">
+      <label for="mSite">Your school</label>
+      <input type="text" id="mSite" list="schools" placeholder="Start typing your school, or paste your Moodle address" autocomplete="off" spellcheck="false">
+      <datalist id="schools">
+        <option value="Trinity Western University (learn.twu.ca)"></option>
+      </datalist>
+      <div class="row" style="margin-top:14px"><button class="primary" id="mSignin">Sign in with Moodle</button></div>
+      <div class="signin hidden" id="mWait">
+        <ol class="steps">
+          <li>Your browser opened your school's Moodle. <b>Sign in</b> if it asks.</li>
+          <li>When the browser asks to <b>open Deadline Hub</b> (or "Moodle"), click <b>Open</b>.</li>
+          <li>Come back here. You'll be connected in a few seconds.</li>
+        </ol>
+        <p class="small" id="mWaitStatus"><span class="spin"></span>Waiting for Moodle…</p>
+      </div>
+      <details style="margin-top:14px" id="mOther"><summary class="small">Didn't work? Other ways to connect</summary>
+        <div class="seg" id="mMode" style="margin-top:10px">
+          <button data-mode="sso" class="sel">Paste a sign-in link</button>
+          <button data-mode="password">Moodle username &amp; password</button>
+        </div>
+        <div id="mSso">
+          <p class="small" style="margin:10px 0 0">Or use the <a href="https://github.com/Vatsalyarabari/Deadline-Hub/tree/main/extension" target="_blank" rel="noopener">browser extension</a>. By hand:</p>
+          <ol class="steps small">
+            <li>In Chrome or Edge, sign in to your Moodle. Press <b>F12</b> → <b>Network</b> → tick <b>Preserve log</b>.</li>
+            <li>In that tab open: <code id="mLaunch">pick your school above</code> <button class="link" id="mCopy" style="font-size:13px">Copy</button></li>
+            <li>Right-click the red <b>token=</b> row → <b>Copy</b> → <b>Copy URL</b>, paste below.</li>
+          </ol>
+          <input type="text" id="mLink" placeholder="moodlemobile://token=…" autocomplete="off" spellcheck="false">
+        </div>
+        <div id="mPass" class="hidden">
+          <label for="mUser">Username</label><input type="text" id="mUser" autocomplete="username">
+          <label for="mPw">Password <span class="hint">used once to get a key, never saved</span></label>
+          <input type="password" id="mPw" autocomplete="current-password">
+        </div>
+        <div class="row" style="margin-top:10px"><button id="mGo">Connect</button></div>
+      </details>
+    </div>
+
+    <!-- Canvas -->
+    <div class="form hidden" data-form="canvas">
+      <label for="cSite">Your school's Canvas address</label>
+      <input type="text" id="cSite" placeholder="yourschool.instructure.com" autocomplete="url" spellcheck="false">
+      <ol class="steps">
+        <li>Open <a id="cSettings" href="#" target="_blank" rel="noopener">your Canvas settings</a> (Account → Settings).</li>
+        <li>Under <b>Approved Integrations</b>, click <b>+ New Access Token</b>. Purpose: <i>Deadline Hub</i>. Leave the expiry blank or pick the end of term.</li>
+        <li>Copy the token Canvas shows (it's only shown once) and paste it here.</li>
+      </ol>
+      <label for="cToken">Access token</label>
+      <input type="password" id="cToken" autocomplete="off" spellcheck="false">
+      <div class="row" style="margin-top:14px"><button class="primary" id="cGo">Connect Canvas</button></div>
+    </div>
+
+    <!-- Calendar link -->
+    <div class="form hidden" data-form="ics">
+      <label for="iName">Name <span class="hint">e.g. "D2L" or "Biology lab calendar"</span></label>
+      <input type="text" id="iName" placeholder="School calendar">
+      <label for="iUrl">Calendar link</label>
+      <input type="url" id="iUrl" placeholder="https://… or webcal://…" spellcheck="false">
+      <details style="margin-top:10px"><summary>Where do I find it?</summary>
+        <ul class="where">
+          <li><b>D2L / Brightspace:</b> Calendar → Subscribe (top right) → copy the link.</li>
+          <li><b>Blackboard:</b> Calendar → ⋯ → Share calendar → copy the link.</li>
+          <li><b>Moodle:</b> Calendar → Export calendar → All courses → Get calendar URL.</li>
+          <li><b>Canvas:</b> Calendar → Calendar Feed (bottom right).</li>
+          <li><b>Google Classroom:</b> Google Calendar → the class calendar's Settings → "Secret address in iCal format".</li>
+        </ul>
+        Calendar links only include due dates your instructors added to the calendar, not dates inside files.
+      </details>
+      <div class="row" style="margin-top:14px"><button class="primary" id="iGo">Add calendar</button></div>
+    </div>
+    <div class="msg" id="setupMsg" role="status"></div>
+  </section>
+
+  <!-- ================= MAIN ================= -->
+  <div class="grid hidden" id="main">
+    <main>
+      <div class="card" style="margin-bottom:16px">
+        <form id="qaForm" class="row" autocomplete="off">
+          <input type="text" id="qaText" aria-label="Quick add" placeholder="Add something: “BUSI 222 group meeting Thu 3pm”" style="flex:1;min-width:200px">
+          <button class="primary" type="submit">Add</button>
+        </form>
+        <div class="msg" id="qaMsg" role="status"></div>
+      </div>
+      <div class="card">
+        <div class="row" style="justify-content:space-between;margin-bottom:10px">
+          <div class="seg" id="tabs" role="tablist">
+            <button data-tab="today" class="sel" role="tab">Do first</button>
+            <button data-tab="all" role="tab">All deadlines</button>
+            <button data-tab="load" role="tab">Workload</button>
+          </div>
+          <label class="hint" style="font-size:13px;color:var(--muted);display:flex;gap:6px;align-items:center">
+            <input type="checkbox" id="showDone"> Show done</label>
+        </div>
+        <div class="stats" id="stats"></div>
+        <div id="view"></div>
+      </div>
+    </main>
+    <aside class="side">
+      <div class="card" id="gradesCard">
+        <h2>Grades</h2>
+        <div id="grades"></div>
+      </div>
+      <div class="card">
+        <h2>Your accounts</h2>
+        <div id="accounts"></div>
+        <button style="margin-top:12px" id="addBtn">+ Add account</button>
+      </div>
+      <div class="card">
+        <h2>On your phone</h2>
+        <p>Download the calendar to get deadlines and reminders on your phone, or connect Notion or Todoist below.</p>
+        <div class="row">
+          <a id="dlLink" href="/calendar.ics"><button>Download calendar</button></a>
+          <button id="openCal" class="hidden">Open in Calendar app</button>
+        </div>
+        <p style="margin-top:12px;font-size:13px">iPhone: email the file to yourself and tap <b>Add All</b>.
+          Google Calendar: Settings → Import &amp; export. Importing again updates events instead of duplicating them.</p>
+      </div>
+      <div class="card">
+        <h2>Reminders</h2>
+        <div class="switch"><div><b>"Start this" heads-up</b><br><span class="small">A week before exams, 5 days before projects, 3 before assignments.</span></div>
+          <button class="toggle" id="tStart" aria-label="Start-by reminders"></button></div>
+        <div class="switch" style="margin-top:12px"><div><b>Morning digest</b><br><span class="small">A list of what's due today, at
+          <input type="time" id="digestTime" style="font:inherit;font-size:12px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);padding:1px 4px"></span></div>
+          <button class="toggle" id="tDigest" aria-label="Morning digest"></button></div>
+        <details style="margin-top:12px"><summary><b style="color:var(--ink)">Class times</b> (for in-class exams)</summary>
+          <p class="small" style="margin:8px 0">When a syllabus says "midterm Nov 2, in class" without a time, the reminder uses your class start time.</p>
+          <div id="classTimes"></div>
+          <div class="row" style="margin-top:8px">
+            <select id="ctCourse" aria-label="Course" style="font:inherit;padding:6px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink)"></select>
+            <input type="time" id="ctTime" aria-label="Class start time" style="font:inherit;padding:5px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink)">
+            <button id="ctAdd">Save</button>
+          </div>
+        </details>
+      </div>
+      <div class="card">
+        <h2>Connected apps</h2>
+        <div id="integrations"></div>
+        <details id="notionBox" style="margin-top:10px"><summary><b style="color:var(--ink)">Notion</b> · cards on your task board</summary>
+          <ol class="steps small">
+            <li>Go to <a href="https://www.notion.so/profile/integrations" target="_blank" rel="noopener">notion.so/profile/integrations</a> → <b>New integration</b>, copy the token.</li>
+            <li>Open your task board → <b>•••</b> → <b>Connections</b> → add the integration. Your board needs a <b>Date</b> column.</li>
+            <li>Copy the board's link (••• → Copy link) and paste both here.</li>
+          </ol>
+          <input type="password" id="nToken" placeholder="Integration token (ntn_…)" autocomplete="off">
+          <input type="text" id="nDb" placeholder="Task board link" style="margin-top:6px" spellcheck="false">
+          <input type="text" id="nCourses" placeholder="Courses database link (optional)" style="margin-top:6px" spellcheck="false">
+          <button class="primary" id="nGo" style="margin-top:8px">Connect Notion</button>
+          <div class="msg" id="nMsg"></div>
+        </details>
+        <details id="todoistBox" style="margin-top:8px"><summary><b style="color:var(--ink)">Todoist</b> · tasks with phone reminders</summary>
+          <ol class="steps small"><li>Todoist → <b>Settings → Integrations → Developer</b> → copy your API token.</li></ol>
+          <input type="password" id="tdToken" placeholder="API token" autocomplete="off">
+          <input type="text" id="tdProject" placeholder="Project name (default: School)" style="margin-top:6px">
+          <button class="primary" id="tdGo" style="margin-top:8px">Connect Todoist</button>
+          <div class="msg" id="tdMsg"></div>
+        </details>
+        <p class="small" style="margin-top:10px">Checking something off in Notion or Todoist checks it off here too, and the other way around.</p>
+      </div>
+      <div class="card" id="autoCard">
+        <div class="switch"><div><b>Keep it running</b><br>
+          <span class="small">Starts with your computer (icon by the clock) and syncs every 3 hours. Close this window anytime.</span></div>
+          <button class="toggle" id="autoToggle" aria-label="Start with computer"></button></div>
+        <div class="msg" id="autoMsg"></div>
+      </div>
+    </aside>
+  </div>
+  <div class="foot">Runs only on this computer. Your passwords and keys never leave it. <button id="quitBtn">Quit app</button></div>
+</div>
+
+<style>
+.small{font-size:13px;color:var(--muted)}
+.chk{appearance:none;width:20px;height:20px;border:2px solid var(--line);border-radius:6px;cursor:pointer;flex:none;margin-top:2px;display:grid;place-content:center;background:var(--panel)}
+.chk:checked{background:var(--good);border-color:var(--good)}
+.chk:checked::after{content:"";width:5px;height:10px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.item.done .title{text-decoration:line-through;color:var(--muted)}
+.item.done .date{opacity:.5}
+.item{grid-template-columns:auto 58px 1fr auto}
+.why{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.why span{font-size:11px;padding:2px 7px;border-radius:6px;background:var(--chip);color:var(--muted)}
+.why span.hot{background:color-mix(in srgb,var(--bad) 15%,var(--panel));color:var(--bad)}
+.rank{font-size:12px;font-weight:700;color:var(--muted);margin-top:4px}
+.heat{display:grid;grid-template-columns:70px repeat(7,1fr) 54px;gap:4px;font-size:12px;align-items:center}
+.heat .h{color:var(--muted);text-align:center}
+.cell{aspect-ratio:1.6;border-radius:6px;background:var(--chip);border:0;padding:0;font-size:11px;color:var(--ink);cursor:default}
+.cell.today{outline:2px solid var(--accent)}
+.cell[data-n]{cursor:pointer}
+.wk{color:var(--muted)} .wk.crunch{color:var(--bad);font-weight:700}
+.grade{padding:8px 0;border-top:1px solid var(--line)} .grade:first-child{border-top:0;padding-top:0}
+.grade .top{display:flex;justify-content:space-between;gap:8px}
+.bar{height:6px;border-radius:3px;background:var(--chip);margin-top:6px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--good)}
+.calc{margin-top:8px;font-size:13px;color:var(--muted)}
+.calc input{width:56px;font:inherit;font-size:13px;padding:2px 6px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.integ{display:flex;justify-content:space-between;align-items:center;padding:6px 0}
+.ct{display:flex;justify-content:space-between;font-size:13px;padding:3px 0}
+</style>
+
+<script>
+const $ = id => document.getElementById(id);
+const TZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+let S = null, polling = null, setupOpen = false, chosen = null, mMode = "sso", removing = null, tab = "today", heatSel = null;
+
+async function api(path, body){
+  const r = await fetch(path, body === undefined ? {} :
+    {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)});
+  return r.json();
+}
+const esc = s => (s ?? "").toString().replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function hue(str){ let h=0; for (const c of str||"") h=(h*31+c.charCodeAt(0))%360; return h; }
+function ago(iso){ const s=(Date.now()-new Date(iso))/1000;
+  if(s<60) return "just now"; if(s<3600) return Math.round(s/60)+" min ago";
+  if(s<86400) return Math.round(s/3600)+" h ago"; return Math.round(s/86400)+" days ago"; }
+function site(v){ v=(v||"").trim().replace(/\/+$/,""); if(!v) return ""; if(!/^https?:\/\//i.test(v)) v="https://"+v;
+  try{ const u=new URL(v); return u.origin + u.pathname.replace(/\/(my|login|course|courses|calendar|user|admin|mod|dashboard|profile)(\/.*)?$/i,"").replace(/\/+$/,""); }catch{ return v; } }
+function localDate(iso){ const [y,m,d]=iso.slice(0,10).split("-").map(Number); return new Date(y,m-1,d); }
+function localTime(iso){ let [h,mi]=iso.slice(11,16).split(":").map(Number);
+  const ap=h>=12?"PM":"AM"; h=h%12||12; return `${h}:${String(mi).padStart(2,"0")} ${ap}`; }
+function dayDiff(iso){ const a=new Date(); a.setHours(0,0,0,0); return Math.round((localDate(iso)-a)/86400000); }
+function groupName(iso){ const n=dayDiff(iso);
+  if(n<=0) return "Today"; if(n===1) return "Tomorrow"; if(n<7) return "This week"; if(n<14) return "Next week"; return "Later"; }
+const KIND = {exam:"Exam",quiz:"Quiz",assignment:"Assignment",lab:"Lab",project:"Project",other:"Deadline"};
+const TYPE = {moodle:"Moodle", canvas:"Canvas", ics:"Calendar link"};
+const EFFORT = {exam:3, project:2.5, assignment:2, quiz:1.5, lab:1.5, other:1};
+const isDone = d => S.done.includes(d.id);
+const deadlines = () => (S.last && S.last.deadlines) || [];
+
+// how urgent + how much it matters
+function score(d){
+  const days=Math.max(dayDiff(d.due),0);
+  const w = d.weight ? 1 + d.weight/15 : 1;
+  return (EFFORT[d.kind]||1) * w / (days+1);
+}
+function reasons(d){
+  const r=[], n=dayDiff(d.due);
+  if(n<=1) r.push(`<span class="hot">due ${n<=0?"today":"tomorrow"}</span>`);
+  else if(n<=3) r.push(`<span class="hot">due in ${n} days</span>`);
+  if(d.weight) r.push(`<span>${d.weight}% of grade</span>`);
+  if(d.kind==="exam") r.push("<span>exam: start studying</span>");
+  else if(d.kind==="project") r.push("<span>big task</span>");
+  return r.join("");
+}
+
+function itemHTML(d, extra=""){
+  const dt=localDate(d.due), n=dayDiff(d.due), done=isDone(d);
+  const rel = n<=0?"today":n===1?"tomorrow":`in ${n} days`;
+  const badge = d.status&&!done?`<span class="badge ${d.status}">${d.status==="new"?"NEW":"CHANGED"}</span>`:"";
+  const course = d.course?`<span class="course" style="background:hsl(${hue(d.course)} 55% 42%)">${esc(d.course)}</span>`:"";
+  const acct = (S.accounts||[]).length>1 && d.account ? `<span>· ${esc(d.account)}</span>` : "";
+  const w = d.weight ? `<span>· ${d.weight}%</span>` : "";
+  const note = d.note ? `<details><summary>${d.manual_id?"Added by you":d.from_file?"Found in a course file":"Details"}</summary><p>${esc(d.note)}</p></details>` : "";
+  const link = d.url ? `<br><a href="${esc(d.url)}" target="_blank" rel="noopener">Open ↗</a>` : "";
+  const rm = d.manual_id ? `<br><button class="link" data-rmm="${esc(d.manual_id)}" style="font-size:12px;color:var(--muted)">Delete</button>` : "";
+  return `<div class="item ${done?"done":""}">
+    <input type="checkbox" class="chk" data-done="${esc(d.id)}" ${done?"checked":""} aria-label="Mark ${esc(d.title)} done">
+    <div class="date"><div class="m">${dt.toLocaleDateString([], {weekday:"short"})}</div>
+      <div class="d">${dt.getDate()}</div><div class="m">${dt.toLocaleDateString([], {month:"short"})}</div></div>
+    <div><div class="title">${esc(d.title)} ${badge}</div>
+      <div class="meta">${course}<span>${KIND[d.kind]||"Deadline"}</span>${w}${acct}</div>${extra}${note}</div>
+    <div class="when">${d.all_day?"All day":localTime(d.due)}<br>${rel}${link}${rm}</div></div>`;
+}
+
+function renderStats(){
+  const all=deadlines(), open=all.filter(d=>!isDone(d));
+  const st=S.streak||{days:0};
+  $("stats").innerHTML = `
+    <div class="stat"><b>${open.length}</b><span>to do</span></div>
+    <div class="stat"><b>${open.filter(d=>dayDiff(d.due)<7).length}</b><span>this week</span></div>
+    <div class="stat"><b>${st.days?("🔥 "+st.days):"0"}</b><span>day streak</span></div>
+    <div class="stat"><b>${st.on_time||0}</b><span>done on time</span></div>`;
+}
+
+function renderToday(){
+  const showDone=$("showDone").checked;
+  const open=deadlines().filter(d=>!isDone(d)).sort((a,b)=>score(b)-score(a));
+  if(!deadlines().length) return '<div class="empty">No deadlines yet. Press <b>Sync now</b>.</div>';
+  if(!open.length) return '<div class="empty">Everything is done. 🎉</div>';
+  const top=open.slice(0,6);
+  let html = `<p class="small" style="margin:6px 0 4px">Ranked by how soon it's due, how much it's worth, and how big it is.</p><div class="group">`;
+  top.forEach((d,i)=> html += itemHTML(d, `<div class="why"><span style="font-weight:700">#${i+1}</span>${reasons(d)}</div>`));
+  html += "</div>";
+  const doneToday = deadlines().filter(d=>isDone(d));
+  if(showDone && doneToday.length){ html += `<div class="group"><h3>Done</h3>${doneToday.map(d=>itemHTML(d)).join("")}</div>`; }
+  return html;
+}
+
+function renderAll(){
+  const showDone=$("showDone").checked;
+  const list=deadlines().filter(d=>showDone||!isDone(d));
+  if(!list.length) return '<div class="empty">Nothing coming up.</div>';
+  const groups={};
+  for(const d of list) (groups[groupName(d.due)] ??= []).push(d);
+  return Object.entries(groups).map(([g,items])=>`<div class="group"><h3>${g}</h3>${items.map(d=>itemHTML(d)).join("")}</div>`).join("");
+}
+
+function renderLoad(){
+  const items=deadlines().filter(d=>!isDone(d));
+  const start=new Date(); start.setHours(0,0,0,0); start.setDate(start.getDate()-((start.getDay()+6)%7)); // Monday
+  const weeks=8, load={}, byDay={};
+  for(const d of items){ const k=d.due.slice(0,10); load[k]=(load[k]||0)+(EFFORT[d.kind]||1)*(d.weight?1+d.weight/20:1); (byDay[k] ??= []).push(d); }
+  const weekTotals=[];
+  for(let w=0;w<weeks;w++){ let t=0; for(let i=0;i<7;i++){ const x=new Date(start); x.setDate(x.getDate()+w*7+i); t+=load[key(x)]||0; } weekTotals.push(t); }
+  const maxWeek=Math.max(...weekTotals,1), crunch=weekTotals.indexOf(Math.max(...weekTotals));
+  let html=`<p class="small" style="margin:6px 0 10px">Darker = more due that day (exams and heavily weighted work count more). Click a day to see it.</p><div class="heat"><div></div>`;
+  for(const n of ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]) html+=`<div class="h">${n}</div>`;
+  html+=`<div class="h">Week</div>`;
+  const todayK=key(new Date());
+  for(let w=0;w<weeks;w++){
+    const ws=new Date(start); ws.setDate(ws.getDate()+w*7);
+    html+=`<div class="wk ${w===crunch&&weekTotals[w]>0?"crunch":""}">${ws.toLocaleDateString([], {month:"short", day:"numeric"})}</div>`;
+    for(let i=0;i<7;i++){
+      const x=new Date(ws); x.setDate(x.getDate()+i); const k=key(x), v=load[k]||0, n=(byDay[k]||[]).length;
+      const a=Math.min(v/6,1);
+      const bg = v ? `background:color-mix(in srgb, var(--bad) ${Math.round(18+a*70)}%, var(--panel))` : "";
+      html+=`<button class="cell ${k===todayK?"today":""}" style="${bg}" ${n?`data-n="${n}" data-day="${k}" aria-label="${n} due ${k}"`:"tabindex=-1"}>${n||""}</button>`;
+    }
+    html+=`<div class="wk ${w===crunch&&weekTotals[w]>0?"crunch":""}">${weekTotals[w]?Math.round(weekTotals[w]*10)/10:"–"}${w===crunch&&weekTotals[w]>0?" ⚠":""}</div>`;
+  }
+  html+="</div>";
+  if(weekTotals[crunch]>0){ const ws=new Date(start); ws.setDate(ws.getDate()+crunch*7);
+    html+=`<p class="small" style="margin-top:10px">⚠ Busiest week: <b>${ws.toLocaleDateString([], {month:"long", day:"numeric"})}</b>. Start those early.</p>`; }
+  if(heatSel && byDay[heatSel]) html+=`<div class="group"><h3>${localDate(heatSel).toLocaleDateString([], {weekday:"long", month:"short", day:"numeric"})}</h3>${byDay[heatSel].map(d=>itemHTML(d)).join("")}</div>`;
+  return html;
+}
+function key(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
+
+function renderView(){
+  renderStats();
+  $("view").innerHTML = tab==="today" ? renderToday() : tab==="all" ? renderAll() : renderLoad();
+  document.querySelectorAll("[data-done]").forEach(c => c.onchange = async () => {
+    const r = await api("/api/done", {id:c.dataset.done, done:c.checked});
+    if(c.checked) S.done.push(c.dataset.done); else S.done = S.done.filter(x=>x!==c.dataset.done);
+    if(r.streak) S.streak=r.streak;
+    renderView();
+  });
+  document.querySelectorAll("[data-rmm]").forEach(b => b.onclick = async () => { await api("/api/manual/remove",{id:b.dataset.rmm}); refresh(); });
+  document.querySelectorAll(".cell[data-day]").forEach(b => b.onclick = () => { heatSel=b.dataset.day; renderView(); });
+}
+
+function renderGrades(){
+  const g=(S.last && S.last.grades)||[];
+  $("gradesCard").classList.toggle("hidden", !g.length);
+  const weights=(S.last && S.last.weights)||{};
+  $("grades").innerHTML = g.map((c,i)=>{
+    const pct = c.percent!=null ? Math.round(c.percent*10)/10 : null;
+    const fw = (weights[c.course]||{})["final exam"] || (c.graded_weight ? Math.max(0, Math.round(100-c.graded_weight)) : "");
+    return `<div class="grade"><div class="top"><b>${esc(c.course)}</b><span>${pct!=null?pct+"%":"–"}</span></div>
+      <div class="bar"><i style="width:${Math.min(pct||0,100)}%"></i></div>
+      ${pct!=null?`<div class="calc">Want <input type="number" min="0" max="100" value="80" data-target="${i}">% with
+        <input type="number" min="1" max="100" value="${fw||30}" data-fw="${i}">% left (final etc.) → need <b data-need="${i}">–</b></div>`:""}
+      ${c.url?`<a href="${esc(c.url)}" target="_blank" rel="noopener" class="small">Grade details ↗</a>`:""}</div>`;
+  }).join("");
+  const calc = i => {
+    const c=g[i], t=+document.querySelector(`[data-target="${i}"]`).value, fw=+document.querySelector(`[data-fw="${i}"]`).value/100;
+    const need = (t - c.percent*(1-fw)) / fw;
+    document.querySelector(`[data-need="${i}"]`).textContent = !isFinite(need) ? "–" : need>100 ? `${Math.round(need)}% (out of reach)` : need<=0 ? "already there ✓" : Math.round(need)+"%";
+  };
+  g.forEach((c,i)=>{ if(c.percent==null) return; calc(i);
+    document.querySelectorAll(`[data-target="${i}"],[data-fw="${i}"]`).forEach(x=>x.oninput=()=>calc(i)); });
+}
+
+function renderSettings(){
+  const r=S.reminders||{};
+  $("tStart").classList.toggle("on", !!r.start_by);
+  $("tDigest").classList.toggle("on", !!r.digest);
+  if(document.activeElement!==$("digestTime")) $("digestTime").value = r.digest_time||"08:00";
+  const ct=S.class_times||{};
+  $("classTimes").innerHTML = Object.entries(ct).map(([c,t])=>`<div class="ct"><span>${esc(c)}</span><span>${esc(t)} <button class="link" data-ctrm="${esc(c)}" style="font-size:12px">remove</button></span></div>`).join("") || '<div class="small">None yet.</div>';
+  document.querySelectorAll("[data-ctrm]").forEach(b=>b.onclick=async()=>{ await api("/api/class-time",{course:b.dataset.ctrm, time:""}); refresh(); });
+  const courses=[...new Set(deadlines().map(d=>d.course).filter(Boolean).concat(((S.last&&S.last.grades)||[]).map(g=>g.course)))].sort();
+  const sel=$("ctCourse"), cur=sel.value;
+  sel.innerHTML = courses.map(c=>`<option ${c===cur?"selected":""}>${esc(c)}</option>`).join("") || "<option value=''>No courses yet</option>";
+  const integ=S.integrations||{};
+  $("integrations").innerHTML = Object.entries(integ).filter(([,v])=>v.enabled).map(([k,v])=>`<div class="integ"><span><span class="dot ok" style="display:inline-block;margin-right:6px"></span><b>${k==="notion"?"Notion":"Todoist"}</b> <span class="small">${esc(v.label||"")}${v.project?" · "+esc(v.project):""}</span></span><button data-intrm="${k}" style="font-size:12px;padding:4px 10px">Disconnect</button></div>`).join("");
+  $("notionBox").classList.toggle("hidden", !!(integ.notion&&integ.notion.enabled));
+  $("todoistBox").classList.toggle("hidden", !!(integ.todoist&&integ.todoist.enabled));
+  document.querySelectorAll("[data-intrm]").forEach(b=>b.onclick=async()=>{ await api("/api/integrations/remove",{name:b.dataset.intrm}); refresh(); });
+}
+
+function renderAccounts(){
+  $("accounts").innerHTML = S.accounts.map(a => {
+    const st=a.status||{};
+    const dot = st.checking||st.ok===undefined ? "" : st.ok ? "ok" : "bad";
+    const sub = st.ok===false ? `<span style="color:var(--bad)">${esc(st.error||"Not working")}</span>`
+      : `<span>${esc(TYPE[a.type])}${a.user?` · ${esc(a.user)}`:""}${a.site?` · ${esc(a.site.replace(/^https?:\/\//,""))}`:""}</span>`;
+    const rm = removing===a.id ? `<button data-rm="${esc(a.id)}" style="background:var(--bad);color:#fff">Confirm</button>`
+      : `<button data-rm="${esc(a.id)}">Remove</button>`;
+    return `<div class="acct"><span class="dot ${dot}"></span><div class="info"><b>${esc(a.label||TYPE[a.type])}</b>${sub}</div>${rm}</div>`;
+  }).join("") || '<div class="small">No school accounts yet.</div>';
+  document.querySelectorAll("[data-rm]").forEach(b => b.onclick = async () => {
+    const id=b.dataset.rm;
+    if(removing!==id){ removing=id; renderAccounts(); return; }
+    removing=null; await api("/api/accounts/remove",{id}); refresh();
+  });
+}
+
+function render(){
+  const has = S.accounts.length>0 || deadlines().length>0, last=S.last;
+  $("setup").classList.toggle("hidden", has && !setupOpen);
+  $("main").classList.toggle("hidden", !has);
+  $("closeSetup").classList.toggle("hidden", !has);
+  $("setupTitle").textContent = has ? "Add another account" : "Connect your school";
+  $("setupSub").classList.toggle("hidden", has);
+  $("syncBtn").classList.toggle("hidden", !has);
+  $("syncPill").classList.toggle("hidden", !has);
+  const b=$("syncBtn");
+  b.disabled = S.running;
+  b.innerHTML = S.running ? '<span class="spin"></span>Syncing… reading course files' : "Sync now";
+  const bad = S.accounts.some(a => a.status && a.status.ok===false);
+  $("syncDot").className = "dot " + (bad ? "bad" : last ? "ok" : "");
+  $("syncText").textContent = S.running ? "Working…" : bad ? "An account needs attention" : last ? `Synced ${ago(last.time)}` : "Not synced yet";
+  let ban="";
+  if(S.run_error) ban += `<div class="banner bad">Sync failed: ${esc(S.run_error)}</div>`;
+  if(last && last.errors) ban += last.errors.map(e=>`<div class="banner bad">${esc(e)}</div>`).join("");
+  if(last && last.conflicts && last.conflicts.length) ban += `<div class="banner warn"><b>Check these dates:</b> two places disagree. Deadline Hub uses the more reliable one, but it's worth a look.<br>` +
+    last.conflicts.map(c=>`${esc(c.title)}: using <b>${c.kept}</b> (${esc(c.kept_from||"official")}) instead of ${c.other} (${esc(c.other_from||"course file")})`).join("<br>") + `</div>`;
+  $("banners").innerHTML = ban;
+  if(has){
+    renderView(); renderAccounts(); renderGrades(); renderSettings();
+    $("dlLink").classList.toggle("hidden", !last);
+    $("openCal").classList.toggle("hidden", !(S.can_open && last));
+    $("autoCard").classList.toggle("hidden", S.autostart===null);
+    $("autoToggle").classList.toggle("on", !!S.autostart);
+  }
+}
+
+async function refresh(){
+  S = await api("/api/state"); render();
+  const busy = S.running || S.accounts.some(a=>a.status&&a.status.checking);
+  if(busy && !polling) polling=setInterval(refresh, 1500);
+  if(!busy && polling){ clearInterval(polling); polling=null; }
+}
+
+// ---------- setup
+function choose(t){
+  chosen=t;
+  document.querySelectorAll(".choice").forEach(c=>c.classList.toggle("sel", c.dataset.type===t));
+  document.querySelectorAll("[data-form]").forEach(f=>f.classList.toggle("hidden", f.dataset.form!==t));
+  setMsg("");
+}
+document.querySelectorAll(".choice").forEach(c => c.onclick = () => choose(c.dataset.type));
+document.querySelectorAll("#mMode button").forEach(b => b.onclick = () => {
+  mMode=b.dataset.mode;
+  document.querySelectorAll("#mMode button").forEach(x=>x.classList.toggle("sel", x===b));
+  $("mSso").classList.toggle("hidden", mMode!=="sso"); $("mPass").classList.toggle("hidden", mMode!=="password");
+});
+const SCHOOLS = {"Trinity Western University (learn.twu.ca)": "https://learn.twu.ca"};
+function schoolSite(){ const v=$("mSite").value.trim(); return SCHOOLS[v] || site(v.replace(/^.*\((.+)\)\s*$/,"$1")); }
+let signinPoll=null;
+$("mSignin").onclick = async () => {
+  const s=schoolSite(); if(!s){ setMsg("Pick your school or paste your Moodle address.","bad"); return; }
+  setMsg(""); $("mSignin").disabled=true;
+  const r=await api("/api/moodle/start",{site:s, tz:TZ}); $("mSignin").disabled=false;
+  if(!r.ok){ setMsg(esc(r.error),"bad"); return; }
+  $("mWait").classList.remove("hidden");
+  if(r.handler==="other"){ $("mOther").open=true;
+    $("mWaitStatus").innerHTML='<span class="spin"></span>Waiting… If the browser opens a different Moodle app instead, use one of the other ways below.'; }
+  else $("mWaitStatus").innerHTML='<span class="spin"></span>Waiting for Moodle…';
+  clearInterval(signinPoll);
+  signinPoll=setInterval(async()=>{ const st=await api("/api/state"); const si=st.signin||{};
+    if(si.status==="ok"){ clearInterval(signinPoll); $("mWait").classList.add("hidden"); setMsg(esc(si.message),"ok"); setupOpen=false; refresh(); }
+    else if(si.status==="error"){ clearInterval(signinPoll); $("mWaitStatus").innerHTML=`<span style="color:var(--bad)">${esc(si.message)}</span>`; }
+  }, 1500);
+};
+function launchUrl(){ const s=schoolSite();
+  return s ? s+"/admin/tool/mobile/launch.php?service=moodle_mobile_app&passport=12345&urlscheme=moodlemobile" : ""; }
+$("mSite").oninput = () => { $("mLaunch").textContent = launchUrl() || "pick your school above"; };
+$("mCopy").onclick = () => { const u=launchUrl(); if(u) navigator.clipboard.writeText(u); };
+$("cSite").oninput = () => { const s=site($("cSite").value); $("cSettings").href = s ? s+"/profile/settings" : "#"; };
+function setMsg(text, kind=""){ $("setupMsg").className="msg "+kind; $("setupMsg").innerHTML=text; }
+async function add(payload, btn){
+  btn.disabled=true; setMsg('<span class="spin"></span>Checking…');
+  const r = await api("/api/accounts/add", {...payload, tz:TZ});
+  btn.disabled=false;
+  if(r.ok){ setMsg("Connected. Syncing your deadlines…","ok");
+    document.querySelectorAll(".form input").forEach(i=>i.value=""); setupOpen=false; choose(null); }
+  else setMsg(esc(r.error),"bad");
+  refresh();
+}
+$("mGo").onclick = () => add(mMode==="sso"
+  ? {type:"moodle", site:schoolSite(), mode:"sso", link:$("mLink").value}
+  : {type:"moodle", site:schoolSite(), mode:"password", username:$("mUser").value, password:$("mPw").value}, $("mGo"));
+$("cGo").onclick = () => add({type:"canvas", site:$("cSite").value, token:$("cToken").value}, $("cGo"));
+$("iGo").onclick = () => add({type:"ics", label:$("iName").value, url:$("iUrl").value}, $("iGo"));
+$("addBtn").onclick = () => { setupOpen=true; render(); window.scrollTo({top:0, behavior:"smooth"}); };
+$("closeSetup").onclick = () => { setupOpen=false; setMsg(""); render(); };
+// the browser extension opens the app with #moodle=<link>
+if(location.hash.startsWith("#moodle=")){
+  const params=new URLSearchParams(location.hash.slice(1)); history.replaceState(null,"","/");
+  const link=params.get("moodle"), siteUrl=params.get("site");
+  setupOpen=true; choose("moodle");
+  $("mLink").value=link||""; if(siteUrl){ $("mSite").value=siteUrl; $("mSite").oninput(); $("mOther").open=true; }
+  if(link && siteUrl) setTimeout(()=>add({type:"moodle", site:siteUrl, mode:"sso", link}, $("mGo")), 300);
+}
+
+// ---------- main interactions
+document.querySelectorAll("#tabs button").forEach(b => b.onclick = () => {
+  tab=b.dataset.tab; document.querySelectorAll("#tabs button").forEach(x=>x.classList.toggle("sel", x===b)); renderView(); });
+$("showDone").onchange = renderView;
+$("qaForm").onsubmit = async e => { e.preventDefault();
+  const text=$("qaText").value.trim(); if(!text) return;
+  const r=await api("/api/quick-add",{text});
+  $("qaMsg").className="msg "+(r.ok?"ok":"bad");
+  $("qaMsg").textContent = r.ok ? `Added “${r.item.title}”${r.item.course?" ("+r.item.course+")":""} for ${localDate(r.item.date).toLocaleDateString([], {weekday:"short", month:"short", day:"numeric"})}${r.item.time?" at "+localTime("0000-00-00T"+r.item.time):""}.` : r.error;
+  if(r.ok) $("qaText").value=""; refresh(); };
+$("syncBtn").onclick = async () => { await api("/api/sync", {}); refresh(); };
+$("openCal").onclick = async () => { const r=await api("/api/open-calendar", {}); if(!r.ok) alert(r.error); };
+$("tStart").onclick = async () => { await api("/api/prefs",{start_by:!S.reminders.start_by}); refresh(); };
+$("tDigest").onclick = async () => { await api("/api/prefs",{digest:!S.reminders.digest}); refresh(); };
+$("digestTime").onchange = async () => { await api("/api/prefs",{digest_time:$("digestTime").value}); refresh(); };
+$("ctAdd").onclick = async () => { const r=await api("/api/class-time",{course:$("ctCourse").value, time:$("ctTime").value}); if(!r.ok) alert(r.error); refresh(); };
+async function connectApp(name, body, msgEl, btn){
+  btn.disabled=true; msgEl.className="msg"; msgEl.innerHTML='<span class="spin"></span>Checking…';
+  const r=await api("/api/integrations/connect",{name, ...body}); btn.disabled=false;
+  msgEl.className="msg "+(r.ok?"ok":"bad"); msgEl.textContent = r.ok ? "Connected. Syncing…" : r.error;
+  refresh();
+}
+$("nGo").onclick = () => connectApp("notion",{token:$("nToken").value, database:$("nDb").value, courses_database:$("nCourses").value}, $("nMsg"), $("nGo"));
+$("tdGo").onclick = () => connectApp("todoist",{token:$("tdToken").value, project:$("tdProject").value}, $("tdMsg"), $("tdGo"));
+$("autoToggle").onclick = async () => {
+  const want=!S.autostart; $("autoMsg").className="msg"; $("autoMsg").textContent="Saving…";
+  const r=await api("/api/autostart", {on:want});
+  $("autoMsg").className="msg "+(r.ok?"ok":"bad");
+  $("autoMsg").textContent = r.ok ? (want?"On. It starts with your computer and syncs by itself.":"Off. Open Deadline Hub yourself to sync.") : r.error;
+  refresh();
+};
+$("quitBtn").onclick = async () => { await api("/api/quit", {}); document.body.innerHTML =
+  '<div class="wrap"><h1>Deadline Hub closed.</h1><p style="color:var(--muted)">Open the app again whenever you like.</p></div>'; };
+
+refresh();
+setInterval(() => { if(!polling) refresh(); }, 30000);
+</script>
+</body>
+</html>

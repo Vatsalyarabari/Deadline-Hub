@@ -1,0 +1,20 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  :root{--ink:#1d1d1b;--muted:#6b6a66;--accent:#2f5bea;--bad:#c43b30;--good:#1f8a4c;--bg:#fff}
+  @media (prefers-color-scheme: dark){:root{--ink:#ecebe6;--muted:#9d9b94;--accent:#6b8cff;--bg:#1f1f1c}}
+  body{margin:0;width:300px;padding:16px;font:14px/1.45 "Segoe UI",system-ui,sans-serif;color:var(--ink);background:var(--bg)}
+  h1{font-size:16px;margin:0 0 6px;display:flex;gap:8px;align-items:center}
+  p{margin:0 0 12px;color:var(--muted)}
+  button{width:100%;font:inherit;font-weight:600;border:0;border-radius:10px;padding:10px;background:var(--accent);color:#fff;cursor:pointer}
+  button:disabled{opacity:.6}
+  #msg{margin-top:10px;font-size:13px}
+  .bad{color:var(--bad)} .ok{color:var(--good)}
+</style></head>
+<body>
+  <h1><img src="icons/icon32.png" width="20" height="20" alt="">Deadline Hub</h1>
+  <p>Open your Moodle in this tab (signed in), then click Connect. Deadline Hub must be running.</p>
+  <button id="go">Connect this Moodle</button>
+  <div id="msg" role="status"></div>
+  <script src="popup.js"></script>
+</body></html>

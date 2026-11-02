@@ -1,0 +1,64 @@
+# Copy to config.yaml and fill in. Secrets go in .env (see .env.example).
+timezone: America/Vancouver
+lookahead_days: 120          # ignore deadlines further out than this
+state_file: state.json       # remembers what's already synced (prevents duplicates)
+
+# Optional: map whatever your portal calls a course to the code you use.
+course_aliases:
+  # "COMPUTATIONAL DATA SCIENCE": "CMPT 401"
+
+sources:
+  # Crawls your Moodle courses: official due dates + dates inside every file and page.
+  # Connect once with:  python -m deadline_hub moodle-login
+  - type: moodle
+    name: moodle
+    base_url: ${MOODLE_URL}
+    token: ${MOODLE_TOKEN}
+    scan_files: true           # read PDFs, Word, PowerPoint, pages and labels
+    # courses: ["CMPT 401", "BUSI 222"]   # optional: only these (default: all current courses)
+    # term_start: 2026-09-08   # optional: for "Week 9" style dates (default: Moodle course start)
+    slash_order: md            # 11/13 = Nov 13. Use dm if your instructors write 13/11.
+
+  # Backup: the portal's calendar export (also catches events added by instructors)
+  - type: ics
+    name: moodle-calendar
+    # Moodle: Calendar -> Export calendar -> "All courses" + "Recent and next 60 days"
+    #         -> Get calendar URL. Paste it into .env as PORTAL_ICS_URL.
+    url: ${PORTAL_ICS_URL}
+    # Or test with a downloaded file instead:
+    # path: sample/moodle_export.ics
+
+destinations:
+  # 1) Calendar feed with phone alerts (works with Google / Apple / Outlook)
+  - type: ics_feed
+    name: calendar
+    path: out/deadlines.ics
+    calendar_name: "School Deadlines"
+    alerts:                  # minutes before due, per type
+      exam: [4320, 1440]     # 3 days, 1 day
+      quiz: [1440, 120]      # 1 day, 2 hours
+      assignment: [1440, 120]
+
+  # 2) Notion task board
+  - type: notion
+    name: notion
+    enabled: false           # set true once .env has NOTION_TOKEN
+    token: ${NOTION_TOKEN}
+    tasks_database_id: ${NOTION_TASKS_DB}
+    courses_database_id: ${NOTION_COURSES_DB}   # optional, links cards to courses
+    default_status: "Not started"
+    properties:              # rename to match YOUR database's column names
+      title: Name
+      due: Due               # Date property (add it if your board doesn't have one)
+      status: Status
+      course: Course         # Relation to your Courses database
+      type: null             # optional Select column, e.g. "Type"
+      link: null             # optional URL column, e.g. "Link"
+
+  # 3) Google Tasks (phone app reminders)
+  - type: google_tasks
+    name: google_tasks
+    enabled: false
+    client_secret_file: google_client_secret.json
+    token_file: google_token.json
+    list_name: "School Deadlines"
